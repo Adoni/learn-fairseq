@@ -1,0 +1,3 @@
+cn2an
+numpy
+fairseq
