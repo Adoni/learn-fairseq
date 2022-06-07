@@ -1,8 +1,7 @@
-export CUDA_VISIBLE_DEVICES=1,2
-fairseq-train iwslt14/preprocessed \
-  --user-dir ./my_fairseq_module \
-  --task my_translation \
-  --arch my_small_transformer \
+#export CUDA_VISIBLE_DEVICES=0,1,2,4
+fairseq-train iwslt14/tmp-preprocessed \
+  --task translation \
+  --arch transformer \
   --optimizer adam \
   --lr 5e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
   --max-tokens 12000 \
@@ -10,4 +9,7 @@ fairseq-train iwslt14/preprocessed \
   --save-interval 5 \
   --tensorboard-logdir logs \
   --skip-invalid-size-inputs-valid-test \
-  --num-workers 1
+  --batch-size 128\
+  --source-lang src \
+  --target-lang tgt \
+  --fp16
