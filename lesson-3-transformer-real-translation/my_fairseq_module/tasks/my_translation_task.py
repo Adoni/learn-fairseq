@@ -23,7 +23,7 @@ class MyJsonDataset(FairseqDataset):
     """
 
     def __init__(self, tokens_list):
-        self.tokens_list = [torch.LongTensor(tokens) for tokens in tokens_list]
+        self.tokens_list = [numpy.array(tokens) for tokens in tokens_list]
         self.sizes = numpy.array([len(tokens) for tokens in tokens_list])
         self.size = len(self.tokens_list)
 
@@ -33,7 +33,7 @@ class MyJsonDataset(FairseqDataset):
 
     def __getitem__(self, i):
         self.check_index(i)
-        return self.tokens_list[i]
+        return torch.from_numpy(self.tokens_list[i])
 
     def __del__(self):
         pass
