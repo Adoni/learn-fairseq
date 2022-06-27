@@ -219,14 +219,6 @@ loss和ppl的曲线如图
 
 ![img.png](loss_and_ppl.png)
 
-这里我们希望完成多卡训练，可能遇到一个问题是：
-
-```
-RuntimeError: unable to open shared memory object </torch_10099_3539805223> in read-write mode
-```
-
-这个问题我还没解决，先当一个TODO吧
-
 ```
 Exception: Size of sample #3610 is invalid (=(1030, 983)) since max_positions=(1024, 1024), skip this example with --skip-invalid-size-inputs-valid-test
 ```
@@ -257,3 +249,16 @@ Mein Name ist Xiaofei Sun und ich bin Studentin der Fakultät für Informatik.
 ['My name is N@@ eck@@ i Sun , and I &apos;m a graduate student at computer science .']
 My name is Necki Sun , and I &apos;m a graduate student at computer science .
 ```
+
+## 一些遇到的问题
+
+多卡训练，可能遇到一个问题是：
+
+```
+RuntimeError: unable to open shared memory object </torch_10099_3539805223> in read-write mode
+```
+
+这个问题是因为tensor在进程spawn时的共享内存解决的不够好。如果我们提前把所有数据以【tensor】的形式存入到MyDBDataset的`__init__函数`中，
+那么当我们想要并行的时候，就需要并行这部分内存，就会遇到这个问题。
+解决方法很简单，在`__init__`函数中存numpy形式的数据，在`__getitem__`里返回的时候再转成tensor。
+详情见`my_fairseq_module/tasks/my_translation_task.py`
