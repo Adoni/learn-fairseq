@@ -8,4 +8,6 @@
 # noinspection PyUnresolvedReferences
 from .model import build_small_transformer
 # noinspection PyUnresolvedReferences
+from .tasks.my_db_translation_task import MyDBTranslationTask
+# noinspection PyUnresolvedReferences
 from .tasks.my_translation_task import MyTranslationTask

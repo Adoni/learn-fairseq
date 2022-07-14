@@ -22,7 +22,7 @@ def run():
 
     while True:
         sentence = input('\nInput: ')
-        translation = model.translate([" ".join(sentence)])
+        translation = model.translate([" ".join(sentence)], no_repeat_ngram_size=1)
         print(translation)
 
 

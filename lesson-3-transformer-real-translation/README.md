@@ -108,10 +108,30 @@ https://github.com/glample/fastBPE
 ./fastBPE/fast learnbpe 40000 iwslt14/tokenized/train.for_bpe.src iwslt14/tokenized/train.for_bpe.tgt > codes.bpe
 ```
 
-strings ~/anaconda3/envs/seq/lib/libstdc++.so | grep GLIBCXX
-export LD_LIBRARY_PATH="/home/sunxiaofei/anaconda3/envs/seq/lib:$LD_LIBRARY_PATH"
+这时候一个可能的报错是：
+> /lib64/libstdc++.so.6: version `GLIBCXX_3.4.20' not found (required by ./fast)
 
-这个时候我们去看codes.bpe会看到类似于这样：
+这是动态链接库的问题，我们应该切换一下动态链接库，用当前虚拟环境中conda安装的。
+
+首先，我们需要查看动态链接库
+
+```
+strings ~/anaconda3/envs/seq/lib/libstdc++.so | grep GLIBCXX.3.4.20
+```
+
+这里需要将`~/anaconda3/envs/seq`替换为你自己的虚拟环境路径，如果能正常找到，那么我们进行下一步（不能找到那就查一下其他方法吧）。
+
+然后我们打开你的shell的配置，比如如果你用bash，那就是`~/.bashrc`，如果你用zsh，那就是`~/.zshrc`。然后添加这一行：
+
+```
+export LD_LIBRARY_PATH="/home/sunxiaofei/anaconda3/envs/seq/lib:$LD_LIBRARY_PATH"
+```
+
+还是需要将`/home/sunxiaofei/anaconda3/envs/seq`替换为你的虚拟环境路径。
+
+最后一步是`source ~/.zshrc`或者`source~/.bashrc`，然后重新进入虚拟环境。
+
+假设fastbpe运行成功了，那这个时候我们去看codes.bpe会看到类似于这样：
 
 ```
 e n</w> 472306
@@ -250,9 +270,48 @@ Mein Name ist Xiaofei Sun und ich bin Studentin der Fakultät für Informatik.
 My name is Necki Sun , and I &apos;m a graduate student at computer science .
 ```
 
+## Step-9 数据入数据库
+
+我们还希望通过数据库存储数据，并与后续的训练打通。
+
+这一步我们简单将之前处理好的输入插入到数据库中，数据库可以自行准备，或者运行以下`docker-compose.yml`:
+
+```yaml
+# Use postgres/example user/password credentials
+version: '3.1'
+services:
+  db:
+    image: postgres:14.2
+    restart: always
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=your_password
+      - POSTGRES_USER=your_name
+      - POSTGRES_DB=your_task_name
+    ports:
+      - '5433:5432'
+    command: >
+      -c work_mem=1GB
+      -c maintenance_work_mem=1GB
+      -c max_wal_size=8GB
+```
+
+## Step-10 导出id
+
+这一步我们是要存储train、valid、test对应的数据库id，从而完成数据库读取。
+
+## Step-10 利用数据库数据进行训练
+
+这一步有三个需要注意的地方：
+
+* 首先是我们使用的dataset，改成了`my_db_translation`，里面的dataset改成了`MyDBDataset`，这个类是最重要的。
+* `MyDBDataset`中，`prefetch`这个函数与后续的`__getitem__`里的逻辑配合，可以实现批量读取数据库的类似cache的功能，从而保证了读取速度
+* 在`step-11-train.py`这个文件中，我们使用`sys.argv`去代替传参，我认为这样比用shell要好
+
 ## 一些遇到的问题
 
-多卡训练，可能遇到一个问题是：
+多卡训练，自己写的dataset可能遇到一个问题是：
 
 ```
 RuntimeError: unable to open shared memory object </torch_10099_3539805223> in read-write mode
